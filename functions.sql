@@ -1,4 +1,3 @@
-
 DELIMITER $$
 CREATE FUNCTION validarEmail(email VARCHAR(100))
 RETURNS BOOLEAN DETERMINISTIC
@@ -7,7 +6,6 @@ RETURN IF
 (email REGEXP '^[a-zA-Z0-9]+@[a-zA-Z]+(\.[a-zA-Z]+)+$',true,false);
 END $$
 DELIMITER ;
-
 
 DELIMITER $$
 CREATE FUNCTION soloLetras(str VARCHAR(100))
