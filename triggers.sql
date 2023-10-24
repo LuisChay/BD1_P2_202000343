@@ -7,6 +7,7 @@ BEGIN
     VALUES (NOW(), 'Se ha realizado una accion en la tabla Estudiante', 'INSERT');
 END$$
 
+
 DELIMITER $$
 CREATE TRIGGER actualizacionEstudiante
 AFTER UPDATE ON estudiante

@@ -92,7 +92,6 @@ BEGIN
     END IF;
     INSERT INTO curso(codigo_curso, nombre_curso, creditos_necesarios, creditos_otorgados, carrera_perteneciente, obligatorio)
     VALUES (codigo_cursoe, nombre_cursoe, creditos_necesariose, creditos_otorgadose, carrera_pertenecientee, obligatorioe);
-
 END $$
 
 DELIMITER $$
@@ -177,13 +176,14 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El curso no esta habilitado en este año';
     END IF;
 
-    INSERT INTO asignacion(codigo_curso, ciclo, seccion, carnet_estudiante)
-    VALUES (codigo_cursoe, cicloe, seccione, carnete);
+    INSERT INTO asignacion(codigo_curso, carnet_estudiante, estado)
+    VALUES (codigo_cursoe, carnete, 1);
     
 	UPDATE curso_habilitado AS ch
     SET ch.canitdad_estudiantes = ch.canitdad_estudiantes + 1
     WHERE ch.codigo_curso_habilitado = codigo_cursoe AND ch.ciclo = cicloe;
 END $$
+
 
 DELIMITER $$
 CREATE PROCEDURE desasignarCurso(IN codigo_cursoe INT, IN cicloe VARCHAR(2),IN seccione CHAR , IN carnete BIGINT)
@@ -219,14 +219,13 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El curso no esta habilitado en este año';
     END IF;
     
-    DELETE FROM asignacion WHERE codigo_curso = codigo_cursoe AND ciclo = cicloe AND seccion = seccione AND carnet_estudiante = carnete;
+    UPDATE asignacion AS a SET a.estado = 0
+    WHERE a.carnet_estudiante = carnete AND a.codigo_curso = codigo_cursoe;
     
     UPDATE curso_habilitado AS ch
     SET ch.canitdad_estudiantes = ch.canitdad_estudiantes - 1
     WHERE ch.codigo_curso_habilitado = codigo_cursoe AND ch.ciclo = cicloe;
 END $$
-
-
 
 DELIMITER $$
 CREATE PROCEDURE ingresarNota(IN codigo_cursoe INT, IN cicloe VARCHAR(2), IN seccione CHAR, IN carnete BIGINT, IN notae INT)
@@ -278,7 +277,6 @@ BEGIN
     INSERT INTO nota(codigo_curso, ciclo, seccion, carnet_estudiante, nota, anio)
     VALUES (codigo_cursoe, cicloe, seccione, carnete, ROUND(notae), YEAR(CURDATE()));
 END $$
-
 
 DELIMITER $$
 CREATE PROCEDURE generarActa(IN codigo_cursoe INT, IN cicloe VARCHAR(2), IN seccione CHAR)
