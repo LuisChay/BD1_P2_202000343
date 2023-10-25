@@ -29,17 +29,22 @@ BEGIN
     VALUES (carnete, nombrese, apellidose, fecha_nacimientoe, correoe, telefonoe, direccione, dpie, CURDATE(), 0, id_carreraent);
 END $$
 
+
 DELIMITER $$
 CREATE PROCEDURE crearCarrera(IN nombre_carrerae VARCHAR(100))
 BEGIN
     IF NOT soloLetras(nombre_carrerae) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El nombre de la carrera debe contener solo letras';
     END IF;
-    
+    IF EXISTS (SELECT * FROM carrera WHERE nombre_carrera = nombre_carrerae) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La carrera ya existe';
+    END IF;
+
     
     INSERT INTO carrera (nombre_carrera)
     VALUES (nombre_carrerae);
 END $$
+
 
 DELIMITER $$
 CREATE PROCEDURE registrarDocente(IN nombrese VARCHAR(100), IN apellidose VARCHAR(100), IN fecha_nacimientoe DATE, IN correoe VARCHAR(100), IN telefonoe BIGINT, IN direccione VARCHAR(100), IN dpie BIGINT, IN siife BIGINT)
@@ -75,9 +80,6 @@ BEGIN
     IF NOT soloNumeros(codigo_cursoe) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El codigo del curso debe contener solo numeros';
     END IF;
-    IF NOT soloLetras(nombre_cursoe) THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El nombre del curso debe contener solo letras';
-    END IF;
     IF NOT soloNumeros(creditos_necesariose) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Los creditos necesarios deben contener solo numeros';
     END IF;
@@ -89,6 +91,9 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT * FROM carrera WHERE id_carrera = carrera_pertenecientee) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La carrera no existe';
+    END IF;
+    IF EXISTS (SELECT * FROM curso WHERE codigo_curso = codigo_cursoe) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El curso ya existe';
     END IF;
     INSERT INTO curso(codigo_curso, nombre_curso, creditos_necesarios, creditos_otorgados, carrera_perteneciente, obligatorio)
     VALUES (codigo_cursoe, nombre_cursoe, creditos_necesariose, creditos_otorgadose, carrera_pertenecientee, obligatorioe);
@@ -160,7 +165,7 @@ BEGIN
     IF NOT EXISTS (SELECT * FROM estudiante WHERE carnet = carnete) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante no existe';
     END IF;
-    IF EXISTS (SELECT * FROM asignacion WHERE carnet_estudiante = carnete AND codigo_curso = codigo_cursoe) THEN
+    IF EXISTS (SELECT * FROM asignacion WHERE carnet_estudiante = carnete AND codigo_curso = codigo_cursoe AND estado = 1) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante ya esta asignado a este curso';
     END IF;
     IF NOT EXISTS (SELECT * FROM curso_habilitado WHERE codigo_curso_habilitado = codigo_cursoe AND ciclo = cicloe) THEN
@@ -175,9 +180,16 @@ BEGIN
     IF NOT EXISTS (SELECT * FROM curso_habilitado WHERE codigo_curso_habilitado = codigo_cursoe AND ciclo = cicloe AND anio = YEAR(CURDATE())) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El curso no esta habilitado en este año';
     END IF;
-
-    INSERT INTO asignacion(codigo_curso, carnet_estudiante, estado)
-    VALUES (codigo_cursoe, carnete, 1);
+    IF NOT EXISTS (SELECT * FROM estudiante WHERE carnet = carnete AND id_carrera_estudiante = (
+        SELECT c.carrera_perteneciente
+        FROM curso AS c
+        WHERE c.codigo_curso = codigo_cursoe OR c.codigo_curso = 0
+    )) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante no pertenece a la carrera del curso';
+    END IF;
+    
+	INSERT INTO asignacion(codigo_curso, carnet_estudiante, estado)
+	VALUES (codigo_cursoe, carnete, 1);	
     
 	UPDATE curso_habilitado AS ch
     SET ch.canitdad_estudiantes = ch.canitdad_estudiantes + 1
@@ -188,7 +200,7 @@ END $$
 DELIMITER $$
 CREATE PROCEDURE desasignarCurso(IN codigo_cursoe INT, IN cicloe VARCHAR(2),IN seccione CHAR , IN carnete BIGINT)
 BEGIN 
-    IF NOT soloNumeros(codigo_cursoe) THEN
+      IF NOT soloNumeros(codigo_cursoe) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El codigo del curso debe contener solo numeros';
     END IF;
     IF NOT soloNumeros(carnete) THEN
@@ -206,11 +218,19 @@ BEGIN
     IF NOT EXISTS (SELECT * FROM estudiante WHERE carnet = carnete) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante no existe';
     END IF;
-    IF NOT EXISTS (SELECT * FROM asignacion WHERE carnet_estudiante = carnete AND codigo_curso = codigo_cursoe) THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Este estudiante no esta asignado a este curso';
+    IF EXISTS (SELECT * FROM asignacion WHERE carnet_estudiante = carnete AND codigo_curso = codigo_cursoe AND estado = 1) THEN
+            UPDATE asignacion AS a SET a.estado = 0
+			WHERE a.carnet_estudiante = carnete AND a.codigo_curso = codigo_cursoe;
+			
+			UPDATE curso_habilitado AS ch
+			SET ch.canitdad_estudiantes = ch.canitdad_estudiantes - 1
+			WHERE ch.codigo_curso_habilitado = codigo_cursoe AND ch.ciclo = cicloe;
     END IF;
     IF NOT EXISTS (SELECT * FROM curso_habilitado WHERE codigo_curso_habilitado = codigo_cursoe AND ciclo = cicloe) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El curso no esta habilitado en este ciclo';
+    END IF;
+    IF NOT EXISTS (SELECT * FROM curso_habilitado WHERE codigo_curso_habilitado = codigo_cursoe AND ciclo = cicloe AND canitdad_estudiantes < cupo_maximo) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El curso ya no tiene cupo';
     END IF;
     IF NOT EXISTS (SELECT * FROM curso_habilitado WHERE codigo_curso_habilitado = codigo_cursoe AND ciclo = cicloe AND seccion = seccione) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El curso no tiene esta seccion';
@@ -218,13 +238,13 @@ BEGIN
     IF NOT EXISTS (SELECT * FROM curso_habilitado WHERE codigo_curso_habilitado = codigo_cursoe AND ciclo = cicloe AND anio = YEAR(CURDATE())) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El curso no esta habilitado en este año';
     END IF;
-    
-    UPDATE asignacion AS a SET a.estado = 0
-    WHERE a.carnet_estudiante = carnete AND a.codigo_curso = codigo_cursoe;
-    
-    UPDATE curso_habilitado AS ch
-    SET ch.canitdad_estudiantes = ch.canitdad_estudiantes - 1
-    WHERE ch.codigo_curso_habilitado = codigo_cursoe AND ch.ciclo = cicloe;
+    IF NOT EXISTS (SELECT * FROM estudiante WHERE carnet = carnete AND id_carrera_estudiante = (
+        SELECT c.carrera_perteneciente
+        FROM curso AS c
+        WHERE c.codigo_curso = codigo_cursoe OR c.codigo_curso = 0
+    )) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estudiante no pertenece a la carrera del curso';
+    END IF;
 END $$
 
 DELIMITER $$
@@ -281,6 +301,8 @@ END $$
 DELIMITER $$
 CREATE PROCEDURE generarActa(IN codigo_cursoe INT, IN cicloe VARCHAR(2), IN seccione CHAR)
 BEGIN 
+    DECLARE cantidad_estudiantes_curso INT;
+	DECLARE cantidad_notas INT;
     IF NOT soloNumeros(codigo_cursoe) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El codigo del curso debe contener solo numeros';
     END IF;
@@ -302,7 +324,22 @@ BEGIN
     IF NOT EXISTS (SELECT * FROM curso_habilitado WHERE codigo_curso_habilitado = codigo_cursoe AND ciclo = cicloe AND anio = YEAR(CURDATE())) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El curso no esta habilitado en este año';
     END IF;
+    
 
-    INSERT INTO acta(codigo_curso, ciclo, seccion, fecha_creacion)
-    VALUES (codigo_cursoe, cicloe, seccione, NOW());
+    SELECT canitdad_estudiantes INTO cantidad_estudiantes_curso 
+    FROM curso_habilitado
+    WHERE codigo_curso_habilitado = codigo_cursoe;
+
+
+    SELECT COUNT(*) INTO cantidad_notas
+    FROM nota
+    WHERE codigo_curso = codigo_cursoe;
+
+    IF cantidad_notas = cantidad_estudiantes_curso THEN
+        INSERT INTO acta(codigo_curso, ciclo, seccion, fecha_creacion)
+        VALUES (codigo_cursoe, cicloe, seccione, NOW());
+    ELSE
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se han ingresado todas las notas de los estudiantes para este curso';
+    END IF;
+    
 END $$

@@ -1,8 +1,5 @@
---Creacion base de datos
 CREATE DATABASE IF NOT EXISTS proyecto2_bases;
 USE proyecto2_bases;
-
---Creacion de tablas del modelo
 
 CREATE TABLE IF NOT EXISTS carrera (
     id_carrera INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -69,11 +66,10 @@ CREATE TABLE IF NOT EXISTS horario (
 CREATE TABLE IF NOT EXISTS asignacion (
     codigo_curso INT NOT NULL,
     FOREIGN KEY (codigo_curso) REFERENCES curso_habilitado(codigo_curso_habilitado),
-    ciclo VARCHAR(10) NOT NULL,
-    seccion CHAR NOT NULL,
     carnet_estudiante BIGINT NOT NULL,
     FOREIGN KEY (carnet_estudiante) REFERENCES estudiante(carnet),
-    estado BOOLEAN NOT NULL
+    estado BOOLEAN NOT NULL, 
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY
 );
 
 CREATE TABLE IF NOT EXISTS nota (
@@ -101,66 +97,127 @@ CREATE TABLE IF NOT EXISTS transaccion (
     tipo VARCHAR(100) NOT NULL
 );
 
---Insercion de datos en las tablas
+-- REGISTRO DE CARRERAS
+CALL crearCarrera('Ingenieria Civil');       -- 1  VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
+CALL crearCarrera('Ingenieria Industrial');  -- 2  VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
+CALL crearCarrera('Ingenieria Sistemas');    -- 3  VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
+CALL crearCarrera('Ingenieria Electronica'); -- 4  VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
+CALL crearCarrera('Ingenieria Mecanica');    -- 5  VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
+CALL crearCarrera('Ingenieria Mecatronica'); -- 6  VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
+CALL crearCarrera('Ingenieria Quimica');     -- 7  VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
+CALL crearCarrera('Ingenieria Ambiental');   -- 8  VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
+CALL crearCarrera('Ingenieria Materiales');  -- 9  VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
+CALL crearCarrera('Ingenieria Textil');      -- 10 VALIDAR QUE LES QUEDE ESTE ID EN LA CARRERA CORRESPONDIENTE
 
+-- REGISTRO DE DOCENTES
+CALL registrarDocente('DocenteUno','ApellidoUno','1999-10-30','aadf@ingenieria.usac.edu.gt',12345678,'direccion',12345678910,1);
+CALL registrarDocente('DocenteDos','ApellidoDos','1999-11-20','docente2@ingenieria.usac.edu.gt',12345678,'direcciondocente2',12345678911,2);
+CALL registrarDocente('DocenteTres','ApellidoTres','1980-12-20','docente3@ingenieria.usac.edu.gt',12345678,'direcciondocente3',12345678912,3);
+CALL registrarDocente('DocenteCuatro','ApellidoCuatro','1981-11-20','docente4@ingenieria.usac.edu.gt',12345678,'direcciondocente4',12345678913,4);
+CALL registrarDocente('DocenteCinco','ApellidoCinco','1982-09-20','docente5@ingenieria.usac.edu.gt',12345678,'direcciondocente5',12345678914,5);
+
+-- REGISTRO DE ESTUDIANTES
+-- SISTEMAS
+CALL registrarEstudiante(202000001,'Estudiante de','Sistemas Uno','1999-10-30','sistemasuno@gmail.com',12345678,'direccion estudiantes sistemas 1',337859510101,3);
+CALL registrarEstudiante(202000002,'Estudiante de','Sistemas Dos','2000-05-03','sistemasdos@gmail.com',12345678,'direccion estudiantes sistemas 2',32781580101,3);
+CALL registrarEstudiante(202000003,'Estudiante de','Sistemas Tres','2002-05-03','sistemastres@gmail.com',12345678,'direccion estudiantes sistemas 3',32791580101,3);
+-- CIVIL
+CALL registrarEstudiante(202100001,'Estudiante de','Civil Uno','1990-05-03','civiluno@gmail.com',12345678,'direccion de estudiante civil 1',3182781580101,1);
+CALL registrarEstudiante(202100002,'Estudiante de','Civil Dos','1998-08-03','civildos@gmail.com',12345678,'direccion de estudiante civil 2',3181781580101,1);
+-- INDUSTRIAL
+CALL registrarEstudiante(202200001,'Estudiante de','Industrial Uno','1999-10-30','industrialuno@gmail.com',12345678,'direccion de estudiante industrial 1',3878168901,2);
+CALL registrarEstudiante(202200002,'Estudiante de','Industrial Dos','1994-10-20','industrialdos@gmail.com',89765432,'direccion de estudiante industrial 2',29781580101,2);
+-- ELECTRONICA
+CALL registrarEstudiante(202300001, 'Estudiante de','Electronica Uno','2005-10-20','electronicauno@gmail.com',89765432,'direccion de estudiante electronica 1',29761580101,4);
+CALL registrarEstudiante(202300002, 'Estudiante de','Electronica Dos', '2008-01-01','electronicados@gmail.com',12345678,'direccion de estudiante electronica 2',387916890101,4);
+-- ESTUDIANTES RANDOM
+CALL registrarEstudiante(201710160, 'ESTUDIANTE','SISTEMAS RANDOM','1994-08-20','estudiasist@gmail',89765432,'direccionestudisist random',29791580101,3);
+CALL registrarEstudiante(201710161, 'ESTUDIANTE','CIVIL RANDOM','1995-08-20','estudiacivl@gmail',89765432,'direccionestudicivl random',30791580101,1);
+
+
+-- AGREGAR CURSO
+-- aqui se debe de agregar el AREA COMUN a carrera
+-- Insertar el registro con id 0
 INSERT INTO carrera(id_carrera, nombre_carrera) VALUES (0, 'Area Comun');
-UPDATE carrera SET id_carrera = 0 WHERE id_carrera = 1;
-ALTER TABLE carrera AUTO_INCREMENT = 1;
+UPDATE carrera SET id_carrera = 0 WHERE id_carrera = LAST_INSERT_ID();
 
-CALL crearCarrera('Ingenieria en Ciencias y Sistemas');
-CALL crearCarrera('Ingenieria Industrial');
-CALL crearCarrera('Ingenieria Quimica'); 
-CALL crearCarrera('Ingenieria Civil');
+-- AREA COMUN
+CALL crearCurso(0006,'Idioma Tecnico 1',0,7,0,false); 
+CALL crearCurso(0007,'Idioma Tecnico 2',0,7,0,false);
+CALL crearCurso(101,'MB 1',0,7,0,true); 
+CALL crearCurso(103,'MB 2',0,7,0,true); 
+CALL crearCurso(017,'SOCIAL HUMANISTICA 1',0,4,0,true); 
+CALL crearCurso(019,'SOCIAL HUMANISTICA 2',0,4,0,true); 
+CALL crearCurso(348,'QUIMICA GENERAL',0,3,0,true); 
+CALL crearCurso(349,'QUIMICA GENERAL LABORATORIO',0,1,0,true);
+-- INGENIERIA EN SISTEMAS
+CALL crearCurso(777,'Compiladores 1',80,4,3,true); 
+CALL crearCurso(770,'INTR. A la Programacion y computacion 1',0,4,3,true); 
+CALL crearCurso(960,'MATE COMPUTO 1',33,5,3,true); 
+CALL crearCurso(795,'lOGICA DE SISTEMAS',33,2,3,true);
+CALL crearCurso(796,'LENGUAJES FORMALES Y DE PROGRAMACIÓN',0,3,3,TRUE);
+-- INGENIERIA INDUSTRIAL
+CALL crearCurso(123,'Curso Industrial 1',0,4,2,true); 
+CALL crearCurso(124,'Curso Industrial 2',0,4,2,true);
+CALL crearCurso(125,'Curso Industrial enseñar a pensar',10,2,2,false);
+CALL crearCurso(126,'Curso Industrial ENSEÑAR A DIBUJAR',2,4,2,true);
+CALL crearCurso(127,'Curso Industrial 3',8,4,2,true);
+-- INGENIERIA CIVIL
+CALL crearCurso(321,'Curso Civil 1',0,4,1,true);
+CALL crearCurso(322,'Curso Civil 2',4,4,1,true);
+CALL crearCurso(323,'Curso Civil 3',8,4,1,true);
+CALL crearCurso(324,'Curso Civil 4',12,4,1,true);
+CALL crearCurso(325,'Curso Civil 5',16,4,1,false);
+CALL crearCurso(0250,'Mecanica de Fluidos',0,5,1,true);
+-- INGENIERIA ELECTRONICA
+CALL crearCurso(421,'Curso Electronica 1',0,4,4,true);
+CALL crearCurso(422,'Curso Electronica 2',4,4,4,true);
+CALL crearCurso(423,'Curso Electronica 3',8,4,4,false);
+CALL crearCurso(424,'Curso Electronica 4',12,4,4,true);
+CALL crearCurso(425,'Curso Electronica 5',16,4,4,true);
 
-CALL registrarDocente('Juan Alberto', 'Perez Mendez', '1976-05-08', 'juanperez@gmail.com', 12345678, 'Guatemala', 4829163729457, 65432109);
-CALL registrarDocente('Maria Jose', 'Gonzalez Perez', '1980-05-08', 'mariagonzales@gmail.com', 12345678, 'Mixco', 7891034568210, 12345678);
-CALL registrarDocente('Pedro Manuel', 'Ortiz Fuentes', '1992-09-10', 'pedrofuentes@gmail.com', 12345678, 'Villa Nueva', 5642378901234, 87654321);
-CALL registrarDocente('Ana Luisa', 'Garcia Marroquin', '1985-07-08', 'anagarcia@gmail.com', 12345678, 'San Juan Sacatepequez', 9783456210145, 23456789);
-CALL registrarDocente('Jorge Mario', 'Diaz Vasquez', '1972-01-02', 'jorgediaz@gmail.com', 12345678, 'San Miguel Petapa', 1234567890123, 98765432);
+CALL habilitarCurso(777, '1S', 1, 150, 'B');
+CALL habilitarCurso(770, '2S', 1, 110, 'A');
+CALL habilitarCurso(960, '1S', 1, 150, 'B');
+CALL habilitarCurso(795, '2S', 1, 110, 'A');
+CALL habilitarCurso(796, '1S', 1, 150, 'B');
 
-CALL registrarEstudiante(202300001, 'Juan Miguel', 'Pérez Perez', '1998-05-15', 'juanperez@email.com', 48759614, '123 Main St', 1234567890123, 1);
-CALL registrarEstudiante(202300002, 'Maria Anotieta', 'González Lopez', '1999-03-20', 'mariagonzalez@email.com', 5559876543, '456 Elm St', 987654321012, 1);
-CALL registrarEstudiante(202300003, 'Pedro Ivan', 'López Fuentes', '2000-07-10', 'pedrolopez@email.com', 5555551234, '789 Oak St', 4567890123456, 3);
-CALL registrarEstudiante(202300004, 'Ana Sofia', 'Martínez Ortiz', '1997-11-28', 'anamartinez@email.com', 5552345678, '567 Pine St', 7890123456789, 4);
-CALL registrarEstudiante(202300005, 'Luis Arturo', 'Sánchez Mendez', '1996-02-05', 'luissanchez@email.com', 5558765432, '234 Cedar St', 8901234567890, 1);
-CALL registrarEstudiante(202300006, 'Dulce Maria', 'Ramírez Sontay', '1998-09-12', 'sofiaramirez@email.com', 555765321, '345 Birch St', 9012345678901, 2);
-CALL registrarEstudiante(202300007, 'Carlos Jose', 'Torres Rios', '1999-04-30', 'carlostorres@email.com', 5551112222, '678 Walnut St', 2345678901234, 3);
-CALL registrarEstudiante(202300008, 'Laura Samanta', 'Gómez Baez', '2001-01-03', 'lauragomez@email.com', 5552223333, '456 Maple St', 1234567890123, 3);
-CALL registrarEstudiante(202300009, 'Javier Roberto', 'Rodríguez Palacios', '1997-06-18', 'javierrodriguez@email.com', 5553334444, '567 Oak St', 9876543210123, 4);
-CALL registrarEstudiante(202300111, 'Maria Isabel', 'Díaz Reyes', '1995-08-22', 'isabeldiaz@email.com', 5554445555, '789 Pine St', 4567890123456, 1);
+CALL agregarHorario(777, 4, '07:00-07:50');
+CALL agregarHorario(770, 7, '08:00-08:50');
+CALL agregarHorario(960, 4, '07:00-07:50');
+CALL agregarHorario(795, 7, '08:00-08:50');
+CALL agregarHorario(796, 4, '07:00-07:50');
 
-CALL crearCurso(1, 'Matematica Basica', 0, 7, 0, 1);
-CALL crearCurso(2, 'Fisica', 0, 5, 0, 1);
-CALL crearCurso(3, 'Social Humanistica', 0, 4, 0, 1);
-CALL crearCurso(4, 'Deportes', 0, 1, 0, 1);
-CALL crearCurso(5, 'Tecnica Complementaria', 0, 3, 0, 1);
-
-CALL crearCurso(111, 'Mate Computo', 5, 7, 1, 1);
-CALL crearCurso(112, 'Logica de Sistemas', 2, 5, 1, 0);
-CALL crearCurso(113, 'IPC', 5, 4, 1, 0);
-CALL crearCurso(114, 'Inteligencia Artificial', 5, 1, 1, 1);
-CALL crearCurso(115, 'Compiladores', 2, 3, 1, 0);
-
-CALL crearCurso(121, 'Contabilidad', 5, 7, 2, 0);
-CALL crearCurso(122, 'Mecanica de Fluidos', 2, 5, 2, 1);
-CALL crearCurso(123, 'Resistencia de Materiales', 5, 4, 2, 1);
-CALL crearCurso(124, 'Mercadotecnia', 5, 1, 2, 0);
-CALL crearCurso(125, 'Ingenieria de Plantas', 2, 3, 2, 0);
-
-CALL crearCurso(131, 'Quimica Organica', 5, 7, 3, 0);
-CALL crearCurso(132, 'Balance de Masa y Energia', 2, 5, 3, 1);
-CALL crearCurso(133, 'Fisico Quimica', 5, 4, 3, 0);
-CALL crearCurso(134, 'Flujo de Fluidos', 5, 1, 3, 1);
-CALL crearCurso(135, 'Transferencia de Calor', 2, 3, 3, 1);
-
-CALL crearCurso(151, 'Topografia', 5, 7, 4, 1);
-CALL crearCurso(152, 'GeoFisica', 2, 5, 4, 1);
-CALL crearCurso(153, 'Hidraulica', 5, 4, 4, 0);
-CALL crearCurso(154, 'Analisis Estructural', 5, 1, 4, 0);
-CALL crearCurso(155, 'Concreto Armado', 2, 3, 4, 0);
+CALL asignarCurso(777, '1S', 'B', 202000001);
+CALL asignarCurso(777, '1S', 'B', 202000002);
+CALL asignarCurso(777, '1S', 'B', 202000003);
+CALL asignarCurso(960, '1S', 'B', 202000001);
+CALL asignarCurso(960, '1S', 'B', 202000002);
+CALL asignarCurso(795, '2S', 'A', 202000002);
+CALL asignarCurso(796, '1S', 'B', 202000003);
 
 
--- Debug
+CALL desasignarCurso(777, '1S', 'B', 202000002);
+CALL desasignarCurso(1, '1S', 'B', 202300002);
+CALL desasignarCurso(2, '2S', 'A', 202300001);
+
+CALL ingresarNota(777, '1S', 'B', 202000001,  65);
+CALL ingresarNota(777, '1S', 'B', 202000002,  25);
+CALL ingresarNota(777, '1S', 'B', 202000003, 41);
+CALL ingresarNota(960, '1S', 'B', 202000001, 74);
+
+CALL generarActa(777, '1S', 'B');
+CALL generarActa(960, '1S', 'B');
+
+CALL consultarPensum(2);
+CALL consultarEstudiante(202000001);
+CALL consultarDocente(1);
+CALL consultarAsignados(777,'1S', 2023, 'B');
+CALL consultarAprobacion(777,'1S', 2023, 'B');
+CALL consultarDesasignacion(777,'1S', 2023, 'B');
+CALL consultarActas(777);
+
+
 USE proyecto2_bases;
 DROP TABLE IF EXISTS estudiante, docente, curso_habilitado, horario, asignacion, nota, acta, curso, carrera, transaccion;
 DROP TABLE IF EXISTS carrera;
